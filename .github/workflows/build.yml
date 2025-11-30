@@ -55,11 +55,7 @@ jobs:
         fi
         echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-    - name: Nuget Login
-      uses: NuGet/login@v1
-      id: login
-      with:
-        user: ${{ secrets.NUGET_USER }}
+
 
   # ----------------------------------------------------------------------
   # 2. Package Job: Eltele.OneOf (Main Library)
@@ -91,13 +87,19 @@ jobs:
           /p:Version=${{ needs.prepare_build.outputs.package_version }} \
           /p:PackageId=${{ env.PACKAGE_ID }} \
           -o ./artifacts
+          
+    - name: Nuget Login
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
 
     - name: Publish ${{ env.PACKAGE_ID }} to NuGet.org
       if: success()
       run: |
         VERSION=${{ needs.prepare_build.outputs.package_version }}
         dotnet nuget push ./artifacts/${{ env.PACKAGE_ID }}.${VERSION}.nupkg \
-          --api-key ${{ needs.prepare_build.outputs.NUGET_API_KEY }} \
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
           --source "https://api.nuget.org/v3/index.json" \
           --skip-duplicate
 
@@ -138,13 +140,19 @@ jobs:
           /p:Version=${{ needs.prepare_build.outputs.package_version }} \
           /p:PackageId=${{ env.PACKAGE_ID }} \
           -o ./artifacts
-
+          
+    - name: Nuget Login
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+        
     - name: Publish ${{ env.PACKAGE_ID }} to NuGet.org
       if: success()
       run: |
         VERSION=${{ needs.prepare_build.outputs.package_version }}
         dotnet nuget push ./artifacts/${{ env.PACKAGE_ID }}.${VERSION}.nupkg \
-          --api-key ${{ needs.prepare_build.outputs.NUGET_API_KEY }} \
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
           --source "https://api.nuget.org/v3/index.json" \
           --skip-duplicate
 
