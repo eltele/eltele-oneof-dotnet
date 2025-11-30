@@ -129,6 +129,24 @@ namespace OneOf.SourceGenerator.Tests
             OpenGenericWithClosed<MyClass2> openWithClosed2 = new MyClass();
             Assert.True(openWithClosed2.IsT1);
         }
+
+        [Fact]
+        public void NamedOneOf_Works_Like_Regular_OneOf()
+        {
+            NamedOneOf myClass = new MyClass();
+            NamedOneOf myClass2 = new MyClass2();
+            NamedOneOf str = "test";
+            
+            Assert.Equal(myClass.IsMyClass, myClass.IsT0);
+            Assert.Equal(myClass2.IsMyClass2, myClass2.IsT1);
+            Assert.Equal(str.IsString, str.IsString);
+            
+            Assert.True(myClass.TryPickMyClass(out _, out var myClassRemainder));
+            Assert.False(myClass.TryPickString(out _, out _));
+            
+            
+            
+        }
     }
 
     [GenerateOneOf]
@@ -139,12 +157,19 @@ namespace OneOf.SourceGenerator.Tests
 
     [GenerateOneOf]
     internal partial class StringOrNumber : OneOfBase<string, int, uint> { }
+    
+
 
     [GenerateOneOf]
     public partial class MyClass2OrMyClass : OneOfBase<MyClass, MyClass2> { }
 
     [GenerateOneOf]
     public partial class MyClassOrFakeOneOf : OneOfBase<MyClass, NotOneOf.OneOf> { }
+    
+    [GenerateNamedOneOf]
+    internal partial class NamedOneOf : OneOfBase<string, MyClass, MyClass2>{ }
+    
+    
 
     public class MyClass
     {

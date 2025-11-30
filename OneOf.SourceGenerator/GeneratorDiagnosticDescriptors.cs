@@ -4,6 +4,7 @@ namespace OneOf
 {
     public class GeneratorDiagnosticDescriptors
     {
+        
         public static readonly DiagnosticDescriptor TopLevelError = new(id: "ONEOFGEN001",
                                                                                               title: "Class must be top level",
                                                                                               messageFormat: "Class '{0}' using OneOfGenerator must be top level",
@@ -31,5 +32,13 @@ namespace OneOf
                                                                                             category: "OneOfGenerator",
                                                                                             DiagnosticSeverity.Error,
                                                                                             isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor DuplicateTypesAreNotAllowed = new(
+            id: "ONEOFGEN006",
+            title: "Named OneOf cannot have duplicate generic types",
+            messageFormat: "Named OneOf cannot have duplicate generic types. Class: '{0}', Duplicate types: '{1}'",
+            category: "OneOfGenerator",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
     }
 }
