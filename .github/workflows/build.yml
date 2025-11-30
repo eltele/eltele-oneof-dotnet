@@ -45,7 +45,7 @@ jobs:
 
     - name: Build all projects (Shared Step)
       # Ensure all projects compile before proceeding
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build OneOf/OneOf.csproj OneOf.SourceGenerator/OneOf.SourceGenerator.csproj --configuration Release --no-restore
 
     - name: Determine Package Version
       id: get_version
