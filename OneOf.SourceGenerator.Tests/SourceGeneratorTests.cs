@@ -133,13 +133,13 @@ namespace OneOf.SourceGenerator.Tests
         [Fact]
         public void NamedOneOf_Works_Like_Regular_OneOf()
         {
+            NamedOneOf str = "test";
             NamedOneOf myClass = new MyClass();
             NamedOneOf myClass2 = new MyClass2();
-            NamedOneOf str = "test";
             
-            Assert.Equal(myClass.IsMyClass, myClass.IsT0);
-            Assert.Equal(myClass2.IsMyClass2, myClass2.IsT1);
-            Assert.Equal(str.IsString, str.IsString);
+            Assert.Equal(str.IsString, str.IsT0);
+            Assert.Equal(myClass.IsMyClass, myClass.IsT1);
+            Assert.Equal(myClass2.IsMyClass2, myClass2.IsT2);
             
             Assert.True(myClass.TryPickMyClass(out _, out var myClassRemainder));
             Assert.False(myClass.TryPickString(out _, out _));
