@@ -40,8 +40,8 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore
+#    - name: Restore dependencies
+#      run: dotnet restore
 
     - name: Determine Package Version
       id: get_version
@@ -81,7 +81,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Build
-      run: dotnet build OneOf/OneOf.csproj --configuration Release --no-restore
+      run: dotnet build OneOf/OneOf.csproj --configuration Release
 
     - name: Pack ${{ env.PACKAGE_ID }}
       # Use the version calculated in the prepare_build job
@@ -128,7 +128,7 @@ jobs:
 
     
     - name: Build
-      run: dotnet build OneOf.SourceGenerator/OneOf.SourceGenerator.csproj --configuration Release --no-restore
+      run: dotnet build OneOf.SourceGenerator/OneOf.SourceGenerator.csproj --configuration Release
 
     - name: Pack ${{ env.PACKAGE_ID }}
       # Use the version calculated in the prepare_build job
