@@ -20,10 +20,7 @@ jobs:
   # 1. Shared Job: Prepares the environment, builds all projects, 
   #    and determines the package version (reused by publishing jobs)
   # ----------------------------------------------------------------------
-  prepare_build:
-    permissions:
-      id-token: write
-      
+  prepare_build:      
     runs-on: ubuntu-latest
     # Define outputs to expose the determined version to dependent jobs
     outputs:
@@ -62,6 +59,8 @@ jobs:
   # ----------------------------------------------------------------------
   publish_oneof:      
     needs: [prepare_build]
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     env:
       PROJECT_PATH: 'OneOf/OneOf.csproj'
@@ -114,6 +113,8 @@ jobs:
   # ----------------------------------------------------------------------
   publish_source_generator:
     needs: [prepare_build]
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     env:
       PROJECT_PATH: 'OneOf.SourceGenerator/OneOf.SourceGenerator.csproj'
