@@ -94,7 +94,7 @@ jobs:
           -o ./artifacts
 
     - name: Publish ${{ env.PACKAGE_ID }} to NuGet.org
-      if: success() && secrets.NUGET_API_KEY
+      if: success()
       run: |
         VERSION=${{ needs.prepare_build.outputs.package_version }}
         dotnet nuget push ./artifacts/${{ env.PACKAGE_ID }}.${VERSION}.nupkg \
@@ -137,7 +137,7 @@ jobs:
           -o ./artifacts
 
     - name: Publish ${{ env.PACKAGE_ID }} to NuGet.org
-      if: success() && secrets.NUGET_API_KEY
+      if: success()
       run: |
         VERSION=${{ needs.prepare_build.outputs.package_version }}
         dotnet nuget push ./artifacts/${{ env.PACKAGE_ID }}.${VERSION}.nupkg \
