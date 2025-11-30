@@ -43,10 +43,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build all projects (Shared Step)
-      # Ensure all projects compile before proceeding
-      run: dotnet build OneOf/OneOf.csproj OneOf.SourceGenerator/OneOf.SourceGenerator.csproj --configuration Release --no-restore
-
     - name: Determine Package Version
       id: get_version
       # Attempts to get version from a git tag (e.g., v1.2.3). 
@@ -83,6 +79,9 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Build
+      run: dotnet build OneOf/OneOf.csproj --configuration Release --no-restore
 
     - name: Pack ${{ env.PACKAGE_ID }}
       # Use the version calculated in the prepare_build job
@@ -126,6 +125,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    
+    - name: Build
+      run: dotnet build OneOf.SourceGenerator/OneOf.SourceGenerator.csproj --configuration Release --no-restore
 
     - name: Pack ${{ env.PACKAGE_ID }}
       # Use the version calculated in the prepare_build job
