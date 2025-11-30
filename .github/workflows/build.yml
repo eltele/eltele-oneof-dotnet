@@ -1,0 +1,152 @@
+name: Build and Publish Two NuGet Packages
+
+on:
+  push:
+    # Triggers the workflow on push events to the 'main' branch
+    branches: [ main ]
+    # Restrict workflow to run only when relevant project files change
+    paths:
+      - 'OneOf/**'
+      - 'OneOf.SourceGenerator/**'
+      - '*.sln'
+  # Allows manual running of the workflow from the GitHub Actions tab
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  # ----------------------------------------------------------------------
+  # 1. Shared Job: Prepares the environment, builds all projects, 
+  #    and determines the package version (reused by publishing jobs)
+  # ----------------------------------------------------------------------
+  prepare_build:
+    permissions:
+      id-token: write
+      
+    runs-on: ubuntu-latest
+    # Define outputs to expose the determined version to dependent jobs
+    outputs:
+      package_version: ${{ steps.get_version.outputs.PACKAGE_VERSION }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Required to fetch git tags for versioning
+
+    - name: Setup .NET Core ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build all projects (Shared Step)
+      # Ensure all projects compile before proceeding
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Determine Package Version
+      id: get_version
+      # Attempts to get version from a git tag (e.g., v1.2.3). 
+      # Falls back to a default version if no tag is found.
+      run: |
+        VERSION=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null | sed 's/^v//')
+        if [ -z "$VERSION" ]; then
+          echo "No suitable tag found. Defaulting to version 1.0.0."
+          VERSION="1.0.0"
+        fi
+        echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Nuget Login
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: secrets.NUGET_USER
+
+  # ----------------------------------------------------------------------
+  # 2. Package Job: Eltele.OneOf (Main Library)
+  # ----------------------------------------------------------------------
+  publish_oneof:      
+    needs: [prepare_build]
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_PATH: 'OneOf/OneOf.csproj'
+      PACKAGE_ID: Eltele.OneOf
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Pack ${{ env.PACKAGE_ID }}
+      # Use the version calculated in the prepare_build job
+      run: |
+        dotnet pack ${{ env.PROJECT_PATH }} \
+          --configuration Release \
+          /p:Version=${{ needs.prepare_build.outputs.package_version }} \
+          /p:PackageId=${{ env.PACKAGE_ID }} \
+          -o ./artifacts
+
+    - name: Publish ${{ env.PACKAGE_ID }} to NuGet.org
+      if: success() && secrets.NUGET_API_KEY
+      run: |
+        VERSION=${{ needs.prepare_build.outputs.package_version }}
+        dotnet nuget push ./artifacts/${{ env.PACKAGE_ID }}.${VERSION}.nupkg \
+          --api-key ${{ needs.prepare_build.outputs.NUGET_API_KEY }} \
+          --source "https://api.nuget.org/v3/index.json" \
+          --skip-duplicate
+
+    - name: Upload Artifact (${{ env.PACKAGE_ID }})
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PACKAGE_ID }}.nupkg
+        path: ./artifacts/*.nupkg
+        
+  # ----------------------------------------------------------------------
+  # 3. Package Job: Eltele.OneOf.SourceGenerator
+  # ----------------------------------------------------------------------
+  publish_source_generator:
+    needs: [prepare_build]
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_PATH: 'OneOf.SourceGenerator/OneOf.SourceGenerator.csproj'
+      PACKAGE_ID: Eltele.OneOf.SourceGenerator
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Pack ${{ env.PACKAGE_ID }}
+      # Use the version calculated in the prepare_build job
+      run: |
+        dotnet pack ${{ env.PROJECT_PATH }} \
+          --configuration Release \
+          /p:Version=${{ needs.prepare_build.outputs.package_version }} \
+          /p:PackageId=${{ env.PACKAGE_ID }} \
+          -o ./artifacts
+
+    - name: Publish ${{ env.PACKAGE_ID }} to NuGet.org
+      if: success() && secrets.NUGET_API_KEY
+      run: |
+        VERSION=${{ needs.prepare_build.outputs.package_version }}
+        dotnet nuget push ./artifacts/${{ env.PACKAGE_ID }}.${VERSION}.nupkg \
+          --api-key ${{ needs.prepare_build.outputs.NUGET_API_KEY }} \
+          --source "https://api.nuget.org/v3/index.json" \
+          --skip-duplicate
+
+    - name: Upload Artifact (${{ env.PACKAGE_ID }})
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PACKAGE_ID }}.nupkg
+        path: ./artifacts/*.nupkg
